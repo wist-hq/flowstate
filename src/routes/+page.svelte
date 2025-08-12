@@ -11,7 +11,7 @@
 </script>
 
 <main>
-    <h1 class="text-purple-500">Welcome to Tauri + Svelte</h1>
+    <h1 class="text-primary">Welcome to Tauri + Svelte</h1>
 
     <form onsubmit={greet}>
         <input placeholder="Enter a name..." bind:value={name} />
