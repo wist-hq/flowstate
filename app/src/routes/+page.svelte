@@ -1,21 +1,24 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api/core";
+    import { open } from "@tauri-apps/plugin-dialog";
+    import { goto } from "$app/navigation";
 
-    let name = $state("");
-    let greetMsg = $state("");
+    const openWorkspace = async () => {
+        const path = await open({
+            directory: true,
+            multiple: false,
+        });
 
-    const greet = async (e: Event) => {
-        e.preventDefault();
-        greetMsg = await invoke("greet", { name });
+        if (!path) {
+            return;
+        }
+
+        const encoded = encodeURIComponent(path);
+        goto(`/workspace/${encoded}`);
     };
 </script>
 
-<main>
-    <h1 class="text-primary">Welcome to Tauri + Svelte</h1>
-
-    <form onsubmit={greet}>
-        <input placeholder="Enter a name..." bind:value={name} />
-        <button type="submit">Greet</button>
-    </form>
-    <p>{greetMsg}</p>
-</main>
+<div class="flex h-screen items-center justify-center">
+    <button class="btn btn-primary" onclick={openWorkspace}>
+        Open Workspace
+    </button>
+</div>
