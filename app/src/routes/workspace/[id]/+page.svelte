@@ -3,7 +3,7 @@
     import Fuse from "fuse.js";
     import { onMount } from "svelte";
 
-    let { data, children } = $props();
+    let { data } = $props();
 
     const workspacePath = $derived(decodeURIComponent(data.id));
 
@@ -43,5 +43,3 @@
         </div>
     {/each}
 </ul>
-
-{@render children()}
