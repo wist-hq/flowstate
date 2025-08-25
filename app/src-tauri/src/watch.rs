@@ -24,18 +24,12 @@ pub async fn watch(
 ) -> Result<(), String> {
     stop_watch(state.clone())?;
 
-    let tmp_dir = TempDir::new().map_err(|e| e.to_string())?;
-    let out_path = tmp_dir.path().join("out.html");
+    let out_path = "~/.";
 
     let child = Command::new("typst")
         .arg("watch")
         .arg(&path)
         .arg(&out_path)
-        .arg("--format")
-        .arg("html")
-        .arg("--no-serve")
-        .arg("--no-reload")
-        .env("TYPST_FEATURES", "html")
         .stdout(Stdio::null())
         .stderr(Stdio::inherit())
         .spawn()
@@ -43,19 +37,21 @@ pub async fn watch(
 
     let app_clone = app_handle.clone();
     let out_path_clone = out_path.clone();
+    let tmp_dir_clone = tmp_dir.path().to_path_buf();
 
     let (tx, rx) = std::sync::mpsc::channel::<()>();
 
     let thread = std::thread::spawn(move || {
-        let mut last_html = String::new();
+        let mut last_pdf_len = 0usize;
 
         let mut watcher = notify::recommended_watcher(move |res: notify::Result<Event>| {
             if let Ok(event) = res {
                 if event.paths.contains(&out_path_clone) {
-                    if let Ok(html) = fs::read_to_string(&out_path_clone) {
-                        if html != last_html {
-                            last_html = html.clone();
-                            let _ = app_clone.emit("typst-update", html);
+                    if let Ok(pdf) = fs::read(&out_path_clone) {
+                        if pdf.len() != last_pdf_len {
+                            last_pdf_len = pdf.len();
+                            let _ =
+                                app_clone.emit("typst-update", out_path_clone.to_str().unwrap());
                         }
                     }
                 }
@@ -65,7 +61,7 @@ pub async fn watch(
 
         println!("{:?}", tmp_dir.path());
         watcher
-            .watch(tmp_dir.path(), RecursiveMode::NonRecursive)
+            .watch(&tmp_dir_clone, RecursiveMode::NonRecursive)
             .unwrap();
 
         let _ = rx.recv();

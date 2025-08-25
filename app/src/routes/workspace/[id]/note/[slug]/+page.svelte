@@ -1,26 +1,28 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
-    import { listen } from "@tauri-apps/api/event";
     import { onDestroy, onMount } from "svelte";
 
     let { data } = $props();
 
-    let html = $state("");
+    let container: HTMLIFrameElement | null = $state(null);
 
     onMount(async () => {
-        await invoke("watch", { path: `${data.id}/${data.slug}` });
+        await invoke("start_preview", { path: `${data.id}/${data.slug}` });
+
+        container?.contentWindow?.location.reload();
+        console.log("here");
     });
 
     onDestroy(async () => {
-        await invoke("stop_watch");
-    });
-
-    listen<string>("typst-update", (event) => {
-        html = event.payload;
+        await invoke("stop_preview");
     });
 </script>
 
 <h1>{data.slug}</h1>
 
-<!-- eslint-disable svelte/no-at-html-tags -->
-{@html html}
+<iframe
+    bind:this={container}
+    title="Tinymist Preview"
+    src="https://google.com"
+    class="h-screen w-full"
+></iframe>
